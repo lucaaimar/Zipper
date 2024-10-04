@@ -57,13 +57,16 @@ def zip_files_with_extension(ini_file=setting_file):
 if __name__ == '__main__':
     # conta i file da elaborare, con l'estensione selezionata
     contatore_file = 0
+    # ottengo l'estensione da usare
+    extension = get_config_from_ini(setting_file)[1]
     for foldername, subfolders, filenames in os.walk(os.getcwd()):
         for filename in filenames:
-            if filename.endswith('.DAT'):
+            if filename.endswith(f'.{extension}'):
                 contatore_file += 1
 
+
     if contatore_file == 0:
-        print("Nessun file .DAT da elaborare.")
+        print(f'Nessun file {extension} da elaborare.')
         input("Premi Invio per uscire...")
         exit(0)
     else:
