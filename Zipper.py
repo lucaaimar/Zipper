@@ -1,6 +1,7 @@
 import os
 import zipfile
 import configparser
+from tqdm import tqdm
 
 setting_file = 'setting.ini'
 
@@ -21,42 +22,55 @@ def zip_files_with_extension(ini_file=setting_file):
 
     # Ottieni il percorso della directory corrente
     current_dir = os.getcwd()
-    # print(current_dir)
 
     # Crea/aggiorna il file ZIP
     with zipfile.ZipFile(zip_name, 'a', compression=zipfile.ZIP_DEFLATED) as zipf:  # 'a' per aggiungere file se lo ZIP esiste
         # Cerca tutti i file con l'estensione specificata nella directory corrente
+        files_to_zip = []
         for foldername, subfolders, filenames in os.walk(current_dir):
             for filename in filenames:
-                # print(filename)
-                # print(extension)
                 if filename.endswith(extension):
-                    # print(extension)
                     file_path = os.path.join(foldername, filename)
-                    # print(file_path)
-                    # Aggiungi il file allo ZIP se non è già presente
-                    if file_path not in zipf.namelist():
-                        try:
-                            zipf.write(file_path, os.path.relpath(file_path, current_dir))
-                            print(f"Aggiunto: {file_path}")
-                            # se va a buon fine l'inserimento nello zip cancello il file non zippato
-                            os.remove(file_path)
-                        except Exception as e:
-                            print(f"Errore durante l'aggiunta del file '{file_path}': {e}")
+                    files_to_zip.append(file_path)
 
+        # Se non ci sono file, interrompi l'esecuzione
+        if not files_to_zip:
+            print(f"Nessun file {extension} da elaborare.")
+            return
+
+        # Inizializza la barra di progresso con il numero di file da zippare
+        with tqdm(total=len(files_to_zip), desc=f"Compressione dei file in corso", unit="file") as pbar:
+            for file_path in files_to_zip:
+                # Aggiungi il file allo ZIP se non è già presente
+                if file_path not in zipf.namelist():
+                    try:
+                        zipf.write(file_path, os.path.relpath(file_path, current_dir))
+                        # print(f"Aggiunto: {file_path}", flush=True)
+                        # se va a buon fine l'inserimento nello zip cancello il file non zippato
+                        os.remove(file_path)
+                    except Exception as e:
+                        print(f"Errore durante l'aggiunta del file '{file_path}': {e}")
+                # Aggiorna la barra di avanzamento
+                pbar.update(1)
 
 
 if __name__ == '__main__':
-    # conta i file da elaborare, con l'estensione selezionata, se non ci sono file da elaborare non faccio niente
+    # conta i file da elaborare, con l'estensione selezionata
     contatore_file = 0
     for foldername, subfolders, filenames in os.walk(os.getcwd()):
         for filename in filenames:
             if filename.endswith('.DAT'):
                 contatore_file += 1
+
     if contatore_file == 0:
         print("Nessun file .DAT da elaborare.")
+        input("Premi Invio per uscire...")
         exit(0)
+    else:
+        print(f"Ci sono {contatore_file} file da elaborare.")
+
     # Richiama la funzione principale per zippare i file
     zip_files_with_extension()
 
     print("ZIP creato con successo!")
+    input("Premi Invio per uscire...")
